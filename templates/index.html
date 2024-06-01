@@ -10,6 +10,11 @@
             <li>{{ stock }}</li>
         {% endfor %}
     </ul>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <p>{{ messages[0] }}</p>
+        {% endif %}
+    {% endwith %}
     <form action="/add_stock" method="post">
         <input type="text" name="stock" placeholder="Add a stock">
         <input type="submit" value="Add">
