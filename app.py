@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, flash
 import yfinance as yf
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 import time
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'
 
 stocks = []
 interval = 60
@@ -18,7 +19,11 @@ def home():
 @app.route('/add_stock', methods=['POST'])
 def add_stock():
     stock = request.form.get('stock')
-    stocks.append(stock)
+    ticker = yf.Ticker(stock)
+    if ticker.info['regularMarketPrice'] is None:
+        flash('No stock found with that ticker.')
+    else:
+        stocks.append(stock)
     return redirect('/')
 
 @app.route('/set_parameters', methods=['POST'])
