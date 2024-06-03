@@ -6,8 +6,8 @@
 <body>
     <h1>Stocks</h1>
     <ul>
-        {% for stock in stocks %}
-            <li>{{ stock }}</li>
+        {% for stock, price in stocks.items() %}
+            <li>{{ stock }}: ${{ price }}</li>
         {% endfor %}
     </ul>
     {% with messages = get_flashed_messages() %}
