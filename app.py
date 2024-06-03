@@ -84,7 +84,7 @@ def send_email(stock, price, change, threshold, interval):
     try:
         msg = MIMEMultipart()
         msg['From'] = os.getenv('EMAIL')
-        msg['To'] = os.getenv('EMAIL')
+        msg['To'] = os.getenv('TOEMAIL')
         msg['Subject'] = f'{stock} Stock Price Alert'
         direction = 'increased' if change > 0 else 'decreased'
         body = f'{stock} stock price has {direction} by ${threshold} in the last {interval} seconds. Current price is: ' + str(price)
@@ -94,7 +94,7 @@ def send_email(stock, price, change, threshold, interval):
         server.starttls()
         server.login(os.getenv('EMAIL'), os.getenv('PASSWORD'))
         text = msg.as_string()
-        server.sendmail(os.getenv('EMAIL'), os.getenv('EMAIL'), text)
+        server.sendmail(os.getenv('EMAIL'), os.getenv('TOEMAIL'), text)
         server.quit()
 
     except Exception as e:
