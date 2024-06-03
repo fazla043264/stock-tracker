@@ -64,7 +64,7 @@ def check_stock_price():
 
                     # Check if the price has increased or decreased by the threshold in the last interval
                     if abs(current_price - last_prices[stock.ticker]) >= stock.threshold:
-                        send_email(stock.ticker, current_price, current_price - last_prices[stock.ticker])
+                        send_email(stock.ticker, current_price, current_price - last_prices[stock.ticker], stock.threshold, stock.interval)
 
                     # Update the last price
                     last_prices[stock.ticker] = current_price
@@ -79,7 +79,7 @@ def check_stock_price():
     thread.start()
     return redirect('/')
 
-def send_email(stock, price, change):
+def send_email(stock, price, change, threshold, interval):
     try:
         msg = MIMEMultipart()
         msg['From'] = os.getenv('EMAIL')
