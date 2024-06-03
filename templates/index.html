@@ -19,12 +19,10 @@
     {% endwith %}
     <form action="/add_stock" method="post">
         <input type="text" name="stock" placeholder="Add a stock">
-        <input type="submit" value="Add">
-    </form>
-    <form action="/set_parameters" method="post">
         <input type="number" name="interval" placeholder="Set interval (seconds)">
         <input type="number" name="threshold" placeholder="Set threshold ($)">
-        <input type="submit" value="Set">
+        <input type="submit" value="Add">
     </form>
+
 </body>
 </html>
