@@ -28,6 +28,7 @@ def home():
     return render_template('index.html', stocks=stocks)
 
 @app.route('/add_stock', methods=['POST'])
+@app.route('/add_stock', methods=['POST'])
 def add_stock():
     stock = request.form.get('stock')
     interval = int(request.form.get('interval'))
