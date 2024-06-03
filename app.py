@@ -1,4 +1,6 @@
-from flask import Flask, request, render_template, flash
+import os
+import threading
+from flask import Flask, request, render_template, flash, redirect
 import yfinance as yf
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -20,48 +22,57 @@ def home():
 def add_stock():
     stock = request.form.get('stock')
     ticker = yf.Ticker(stock)
-    if ticker.info['regularMarketPrice'] is None:
-        flash('No stock found with that ticker.')
-    else:
+    try:
+        ticker.history().tail(1)['Close'].iloc[0]
         stocks.append(stock)
+    except IndexError:
+        flash('No stock found with that ticker.')
     return redirect('/')
 
 @app.route('/set_parameters', methods=['POST'])
 def set_parameters():
     global interval, threshold
-    interval = int(request.form.get('interval'))
-    threshold = int(request.form.get('threshold'))
+    try:
+        interval = int(request.form.get('interval'))
+        threshold = int(request.form.get('threshold'))
+    except ValueError:
+        flash('Please enter valid integer values for interval and threshold.')
     return redirect('/')
 
 @app.route('/check_stock_price')
 def check_stock_price():
-    last_prices = {stock: 0 for stock in stocks}
+    def check_price():
+        last_prices = {stock: 0 for stock in stocks}
 
-    while True:
-        for stock in stocks:
-            try:
-                # Fetch current price
-                ticker = yf.Ticker(stock)
-                current_price = ticker.history().tail(1)['Close'].iloc[0]
+        while True:
+            for stock in stocks:
+                try:
+                    # Fetch current price
+                    ticker = yf.Ticker(stock)
+                    current_price = ticker.history().tail(1)['Close'].iloc[0]
 
-                # Check if the price has increased or decreased by the threshold in the last interval
-                if abs(current_price - last_prices[stock]) >= threshold:
-                    send_email(stock, current_price, current_price - last_prices[stock])
+                    # Check if the price has increased or decreased by the threshold in the last interval
+                    if abs(current_price - last_prices[stock]) >= threshold:
+                        send_email(stock, current_price, current_price - last_prices[stock])
 
-                # Update the last price
-                last_prices[stock] = current_price
+                    # Update the last price
+                    last_prices[stock] = current_price
 
-            except Exception as e:
-                print(f"Error occurred while fetching the price for {stock}: {e}")
+                except Exception as e:
+                    print(f"Error occurred while fetching the price for {stock}: {e}")
 
-        # Wait for the specified interval
-        time.sleep(interval)
+            # Wait for the specified interval
+            time.sleep(interval)
+
+    thread = threading.Thread(target=check_price)
+    thread.start()
+    return redirect('/')
 
 def send_email(stock, price, change):
     try:
         msg = MIMEMultipart()
-        msg['From'] = 'your_email@example.com'
-        msg['To'] = 'your_email@example.com'
+        msg['From'] = os.getenv('EMAIL')
+        msg['To'] = os.getenv('EMAIL')
         msg['Subject'] = f'{stock} Stock Price Alert'
         direction = 'increased' if change > 0 else 'decreased'
         body = f'{stock} stock price has {direction} by ${threshold} in the last {interval} seconds. Current price is: ' + str(price)
@@ -69,9 +80,9 @@ def send_email(stock, price, change):
 
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login('your_email@example.com', 'your_password')
+        server.login(os.getenv('EMAIL'), os.getenv('PASSWORD'))
         text = msg.as_string()
-        server.sendmail('your_email@example.com', 'your_email@example.com', text)
+        server.sendmail(os.getenv('EMAIL'), os.getenv('EMAIL'), text)
         server.quit()
 
     except Exception as e:
